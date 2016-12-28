@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ru-RU" xmlns="http://www.w3.org/1999/xhtml">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+		<title> Player </title>
+		
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+		<meta http-equiv="Pragma" content="no-cache" />
+		<meta http-equiv="Expires" content="0" />
+
+		<script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+
+		<!-- Latest compiled and minified CSS -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+		<!-- Optional theme -->
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+		<!-- Latest compiled and minified JavaScript -->
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+		<link rel="stylesheet" href="./pl.css" type="text/css">
+	</head>
+
+	<body>
+	
+	<div ng-app="myApp">
+	<div ng-controller="HomeCtrl as controller">
+
+		<ul class="nav nav-tabs hide">
+			<li class="active"><a data-toggle="tab" href="#panel1">Форма логона</a></li>
+			<li><a data-toggle="tab" href="#panel2">Плеер</a></li>
+		    <li><a data-toggle="tab" href="#panel3">Плейлист</a></li>
+			<li><a data-toggle="tab" href="#panel4">Настройки</a></li>
+		</ul>
+		 
+		<div class="tab-content">
+			<div id="panel1" class="tab-pane fade in active">
+				<div class="videogular-container black">
+					<br><br><br> <!-- FIX ME, im not a designer =( -->
+					<div class="logon">
+						<div class="input-group">
+							<span class="input-group-addon" id="basic-addon1">KARTINA<br>LOGO</span>
+							<input id="user_login" type="text" class="form-control" placeholder="Логин" aria-describedby="basic-addon1" value="857957">
+							<input id="user_pass" type="text" class="form-control" placeholder="Пароль" aria-describedby="basic-addon1" value="846690">
+						</div>
+						<div align="right"> <button ng-click="controller.doLogin();" type="button" class="btn btn-default">Войти</button> </div>
+						<p id="showErrors"></p>
+					</div>					
+				</div>
+		  </div>
+		  <div id="panel2" class="tab-pane fade">
+				<div class="videogular-container">
+					<videogular vg-player-ready="controller.onPlayerReady($API)" vg-complete="controller.onCompleteVideo()" vg-theme="controller.config.theme.url">
+						<vg-media vg-src="controller.config.sources" vg-hls
+								  vg-tracks="controller.config.tracks">
+						</vg-media>
+
+						<vg-controls>
+							<vg-play-pause-button></vg-play-pause-button>
+							<vg-time-display>{{ currentTime | date:'mm:ss':'+0000' }}</vg-time-display>
+							<vg-scrub-bar>
+								<vg-scrub-bar-current-time></vg-scrub-bar-current-time>
+							</vg-scrub-bar>
+							<vg-time-display>{{ timeLeft | date:'mm:ss':'+0000' }}</vg-time-display>
+							<vg-volume>
+								<vg-mute-button></vg-mute-button>
+								<vg-volume-bar></vg-volume-bar>
+							</vg-volume>
+							<vg-fullscreen-button></vg-fullscreen-button>
+								<div class='my-button iconButton'><a ng-click="controller.show_config();" target='_blank'>Настройки</a></div>
+								<div class='my-button iconButton'><a ng-click="controller.show_playlist();" target='_blank'>Плейлист</a></div>
+								<div class='my-button iconButton'><a ng-click="controller.logout();"  target='_blank'>Выход</a></div>
+						</vg-controls>
+
+						<vg-overlay-play></vg-overlay-play>
+						<vg-buffering></vg-buffering>
+						<vg-poster vg-url='controller.config.plugins.poster'></vg-poster>
+					</videogular>
+				</div>
+		  </div>
+		  <div id="panel3" class="tab-pane fade">
+				<div class="videogular-container">
+					<div class="playlist scroll" id="playlist">					
+						<ul class="nav nav-tabs" id="playlist_group_names">
+							<li class="active"><a data-toggle="tab" href="#group_ch1">group_ch1</a></li>
+							<li><a data-toggle="tab" href="#group_ch2">group_ch2</a></li>
+						</ul>
+						<div class="tab-content" id="playlist_group_channels" ng-click="chooseChannel($event)">
+							<div id="group_ch1" class="tab-pane fade">
+								
+							</div>
+							<div id="group_ch2" class="tab-pane fade">
+							</div>						
+						</div>
+					</div>		
+				</div>
+		  </div>
+		  <div id="panel4" class="tab-pane fade">
+			<div class="logon">
+				<p>Формат вещания (http_h264, dash_hevc, hls_h264, udt_h264)</p> 
+				<input id="format" type="text" class="form-control" placeholder="Формат вещания" aria-describedby="basic-addon1" value="hls_h264">
+				<button ng-click="controller.set_config();" type="button" class="btn btn-default">Установить</button>
+				<p id="showErrorsCfg"></p>
+			</div>
+		  </div>
+		</div>
+
+	</div>
+	</div>
+	</body>
+	
+
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular-sanitize.min.js"></script>
+	<script src="http://static.videogular.com/scripts/videogular/latest/videogular.js"></script>
+	<script src="http://static.videogular.com/scripts/controls/latest/vg-controls.js"></script>
+	<script src="http://static.videogular.com/scripts/overlay-play/latest/vg-overlay-play.js"></script>
+	<script src="http://static.videogular.com/scripts/poster/latest/vg-poster.js"></script>
+	<script src="http://static.videogular.com/scripts/buffering/latest/vg-buffering.js"></script>
+	<script src="https://cdn.jsdelivr.net/hls.js/latest/hls.min.js"></script>
+	
+	<script src="./vg-hls.js"></script>
+	<script src="./pl.js"></script>
+
+	
+</html>
+
+
+
+
+
+
+
+
+
