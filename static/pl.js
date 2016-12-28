@@ -150,14 +150,19 @@ angular.module('myApp',
 			
 				var login = document.getElementById('user_login').value;
 				var pass = document.getElementById('user_pass').value;
+				var cli_serial;
 				
-				var formData = {
-					login: login,
-					pass:  pass,
-					softid: "dev-test-000"
-				};	
+				new Fingerprint2().get(function(result, components){
+					cli_serial = result;
+					
+					var formData = {
+						login: login,
+						pass:  pass,
+						softid: "web-ktv-002",
+						cli_serial: cli_serial
+					};	
 
-				controller.doPost(server_url + "/api/jsonp/login", formData, function(out) {
+					controller.doPost(server_url + "/api/jsonp/login", formData, function(out) {
 						set_video = controller.setVideo;
 						if (typeof out.sid !== 'undefined') {
 							// the variable is defined
@@ -206,6 +211,7 @@ angular.module('myApp',
 							var outstr = JSON.stringify(out);
 							document.getElementById('showErrors').innerHTML = outstr;
 						}
+					});
 				});
             };
         }]

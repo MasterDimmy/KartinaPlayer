@@ -58,7 +58,7 @@ angular.module('myApp',
 					if (typeof out.url !== 'undefined') {
 						var url = out.url;
 						
-						// аНаАбаАаЛаО аБаЛаОаКаА, аКаОбаОббаЙ ббаЕаБбаЕббб баОаЛбаКаО аПбаИ аПбаОаКбаИбаОаВаАаНаИаИ баЕбаЕаЗ localhost			
+						// for localhost ?
 						if (url.indexOf("http/ts://")==0) {
 							url = "http://" + url.substr(10,url.length-10);
 						};
