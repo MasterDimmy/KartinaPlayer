@@ -67,10 +67,11 @@ angular.module('myApp',
 						};
 						// -------
 
-						alert(url);
+						//alert(url);
 						
 						var new_src = [
-							{src: $sce.trustAsResourceUrl(url), type: "application/x-mpegURL"}
+							//{src: $sce.trustAsResourceUrl(url), type: "application/x-mpegURL"}
+							{src: url, type: "application/x-mpegURL"}
 						];
 																
 						controller.config.sources = new_src; //controller.videos[0].sources;
@@ -150,23 +151,18 @@ angular.module('myApp',
 			
 				var login = document.getElementById('user_login').value;
 				var pass = document.getElementById('user_pass').value;
-				var cli_serial;
 				
 				new Fingerprint2().get(function(result, components){
-					cli_serial = result;
-					
 					var formData = {
 						login: login,
 						pass:  pass,
 						softid: "web-ktv-002",
-						cli_serial: cli_serial
+						cli_serial: "some_val"
 					};	
 
 					controller.doPost(server_url + "/api/jsonp/login", formData, function(out) {
 						set_video = controller.setVideo;
 						if (typeof out.sid !== 'undefined') {
-							// the variable is defined
-							
 								controller.doGet(server_url + "/api/jsonp/channel_list", null, function(out){
 									if (typeof out.groups !== 'undefined') {
 										controller.playlist = out;
