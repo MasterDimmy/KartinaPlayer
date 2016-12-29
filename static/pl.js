@@ -239,7 +239,7 @@ function KartinaPlayerFactory(properties) {
 		set_video: function(id) {
 			if (this.current_video_id !== -1)
 				controller.API.Stop();
-				
+			this.current_video_id = id;			
 			var param = [];
 			param["cid"] = id;
 			this.helper.run(this.server_url+"/api/json/get_url", param, this.on_set_video);
@@ -307,7 +307,8 @@ function KartinaPlayerFactory(properties) {
 		
 		// ------------------------------------------ logout --------------------------------------------------------------
 		logout: function() {
-			this.display_atlogon_info("Проверка входа...");			
+			if (this.current_video_id !== -1)
+				controller.API.Stop();		
 			this.helper.run(this.server_url+"/api/json/logout", null, this.on_logout);
 		},
 		
