@@ -3,15 +3,15 @@
 	<head>
 		<meta charset="utf-8">
 		<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-		<title> Player </title>
+		<title> KartinaPlayer </title>
 		
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 
 		<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
 		<meta http-equiv="Pragma" content="no-cache" />
-		<meta http-equiv="Expires" content="0" />
-
+		<meta http-equiv="Expires" content="0" />                  
+		
 		<script src="./libs/jquery-3.1.1.min.js"></script>
 
 		<!-- Latest compiled and minified CSS -->
@@ -23,13 +23,87 @@
 		<!-- Latest compiled and minified JavaScript -->
 		<script src="./libs/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
-		<link rel="stylesheet" href="./pl.css" type="text/css">
+		<link rel="stylesheet" href="./pl.css" type="text/css">	
 	</head>
 
 	<body>
+	
+	<div id="KartinaPlayerApp" ng-app="KartinaPlayerApp">
+	<div ng-controller="HomeCtrl as controller">
+
+		<ul class="nav nav-tabs hide">
+			<li class="active"><a data-toggle="tab" href="#player_logon">Форма логона</a></li>
+			<li><a data-toggle="tab" href="#player_view">Плеер</a></li>
+		    <li><a data-toggle="tab" href="#player_playlist">Плейлист</a></li>
+		</ul>
+		 
+		<div class="tab-content">
+			<div id="player_logon" class="tab-pane fade in active">
+				<div class="videogular-container black">
+					<div class="logon">
+						<div class="input-group">
+							<span class="input-group-addon" id="basic-addon1">KARTINA<br>LOGO</span>
+							<input id="user_login" type="text" class="form-control" placeholder="Логин" aria-describedby="basic-addon1" value="857957">
+							<input id="user_pass" type="text" class="form-control" placeholder="Пароль" aria-describedby="basic-addon1" value="846690">
+						</div>
+						<div align="right"> <button ng-click="controller.login();" type="button" class="btn btn-default">Войти</button> </div>
+						<p id="showErrors"></p>
+					</div>					
+				</div>
+		  </div>
+		  <div id="player_view" class="tab-pane fade">
+				<div class="videogular-container">
+					<videogular vg-player-ready="controller.onPlayerReady($API)" vg-complete="controller.onCompleteVideo()" vg-theme="controller.config.theme.url">
+						<vg-media vg-src="controller.config.sources" vg-hls
+								  vg-tracks="controller.config.tracks">
+						</vg-media>
+
+						<vg-controls>
+							<vg-play-pause-button></vg-play-pause-button>
+							<vg-time-display>{{ currentTime | date:'mm:ss':'+0000' }}</vg-time-display>
+							<vg-scrub-bar>
+								<vg-scrub-bar-current-time></vg-scrub-bar-current-time>
+							</vg-scrub-bar>
+							<vg-time-display>{{ timeLeft | date:'mm:ss':'+0000' }}</vg-time-display>
+							<vg-volume>
+								<vg-mute-button></vg-mute-button>
+								<vg-volume-bar></vg-volume-bar>
+							</vg-volume>
+							<vg-fullscreen-button></vg-fullscreen-button>
+								<div class="my-button iconButton"><a ng-click="controller.show_playlist();" target="_blank">Плейлист</a></div>
+								<div class="my-button iconButton"><a ng-click="controller.logout();"  target="_blank">Выход</a></div>
+						</vg-controls>
+
+						<vg-overlay-play></vg-overlay-play>
+						<vg-buffering></vg-buffering>
+						<vg-poster vg-url="controller.config.plugins.poster"></vg-poster>
+					</videogular>
+				</div>
+		  </div>
+		  <div id="player_playlist" class="tab-pane fade">
+				<div class="videogular-container">
+					<div class="playlist scroll" id="playlist">					
+						<ul class="nav nav-tabs" id="playlist_group_names">
+							<li class="active"><a data-toggle="tab" href="#group_ch1">group_ch1</a></li>
+							<li><a data-toggle="tab" href="#group_ch2">group_ch2</a></li>
+						</ul>
+						<div class="tab-content" id="playlist_group_channels" ng-click="chooseChannel($event)">
+							<div id="group_ch1" class="tab-pane fade">
+								
+							</div>
+							<div id="group_ch2" class="tab-pane fade">
+							</div>						
+						</div>
+					</div>		
+				</div>
+		  </div>
+		</div>
+
+	</div>
+	</div>		
+
 	</body>
 	
-
 	<script src="./libs/angular.min.js"></script>
 	<script src="./libs/angular-sanitize.min.js"></script>
 	<script src="./libs/videogular.js"></script>
@@ -40,18 +114,14 @@
 	<script src="./libs/hls.min.js"></script>
 	<script src="./libs/vg-hls.js"></script>
 	<script src="./libs/fingerprint2.min.js"></script>
-	
+
+	                                                      	
 	<script src="./pl.js"></script>
-
 	<script>
-		//создали плеер 
-		var player = KartinaPlayerFactory({server_url: "https://rustvt.kartina.tv"});
-
-		//показали там, где сказано
-		document.body.appendChild(player.div);
-		
-		//построили
-		player.build();
+		/*создали плеер */
+		var player = KartinaPlayerFactory({server_url: "https://rustvt.kartina.tv/", autologin: true});
+		/*запустили*/
+		player.run();
 	</script>
 	
 </html>

@@ -10,7 +10,7 @@
 Использование:
 
 	//создали плеер 
-	var player = new KartinaPlayerFactory({server_url: "https://rustvt.kartina.tv"});
+	var player = new KartinaPlayerFactory({server_url: "https://rustvt.kartina.tv", autologin: true});
 
 	//показали там, где сказано
 	document.body.appendChild(player.div());
@@ -18,9 +18,11 @@
 
 ===== КИШКИ ФАБРИКИ ====
 
-Свойства создаваемого плеера: {
-	server_url: "https://rustvt.kartina.tv"
-	name = "kartinaPlayer12";
+Свойства создаваемого плеера: 
+{
+	server_url: "https://rustvt.kartina.tv",
+	autologin: true,	//если пользователь уже вошел (по кукам, то не отображать страницу входа и сразу входить)
+	stored_playlist_refresh: 30  //предел времени хранения плейлиста, если прошло больше секунд, то делаем запрос, иначе возвращаем хранимый, по умолчанию равен 7
 }
 
 Методы: 
@@ -45,56 +47,309 @@
 // jsonp помощник решения CORS проблемы
 // на входе url для GET запроса с указанием метода callback, который должен получить ответ
 // пример использования:
-// var helper = new JsonpHelper(url, func).run();
+// var helper = JsonpHelper().run(url, params, func);
 // *url не должен содержать callback в своем теле!
 
-function JsonpHelper(url, callback) {
-	var prototypes = {
+var GeneralJsonpHelperCallback = function() {};
+function JsonpHelper() {
+	var helper = {	
 		on_callback: function(val) {	
-			this.callback(val);
+			GeneralJsonpHelperCallback(val);
 		},
 
-		run: function(src) {
+		run: function(src, parameters, callback) {
+			GeneralJsonpHelperCallback = callback;
+			
 			if (src.indexOf("?") == -1) src += "?";
-			if (src.indexOf("?") !== -1) src += "&";
-			src += "callback="+this.constructor.name+".on_callback";
+			else if (src.indexOf("?") !== -1) src += "&";
+			
+			var params = "";
+			var was_here = 0;
+			for (var key in parameters) {
+				if (was_here>0) params += "&";	
+				params += key + "=" + parameters[key];
+				was_here++;
+			}
+			if (was_here>0) src += params+"&";						
+			src += "callback=GeneralJsonpHelperCallback";			
+			
+			console.log("run jsonp ["+src+"]");
 			
 			var elem = document.createElement("script");
 			elem.src = src;
 			document.head.appendChild(elem);
 		}
 	};
-	
-	// ------------------------------------------ собираем помощника --------------------------------------------------------------
-	//возвращаемый объект 
-	var helper = {};
-	
-	//кого вызываем с результатом?
-	helper.callback = callback;
-		
-	//методы
-	for (var method in prototypes) {					
-		helper.prototype[method] = prototype[method];
-	}
-		
+			
 	return helper;
 }
 
 // ========================================== ФАБРИКА СОЗДАНИЯ ПЛЕЕРА ==============================================================================
+var GeneralKartinaPlayer = null;
 function KartinaPlayerFactory(properties) {
-	var prototypes = {
+	//создадим помощника
+	var new_helper = JsonpHelper();
+	
+	//управление вкладками
+	var pager = {
+		show_logon: function() {
+			this.display_atlogon_info("");			
+			console.log("Переход на главную форму");	
+			$('.nav-tabs a[href="#player_logon"]').tab('show');			
+		},	
+		show_playlist: function() {
+			console.log("Начинаем показывать плейлист");	
+			$('.nav-tabs a[href="#player_playlist"]').tab('show');
+		},	
+		show_player: function() {
+			console.log("Показываем плеер");
+			$('.nav-tabs a[href="#player_view"]').tab('show');						
+		}
+	};
+
+	//база плеера
+	var player = {
+		//КОНФИГУРИРУЕМЫЕ ЗНАЧЕНИЯ
+		server_url: properties.server_url,	
+		autologin: (properties.autologin !== undefined) ? (properties.autologin) : false,
+		stored_playlist_refresh: (properties.stored_playlist_refresh !== undefined) ? (properties.stored_playlist_refresh) : 7, 
+		
+		//ВНУТРЕННИЕ СВОЙСТВА
+		helper: new_helper, 		//загрузчик jsonp
+		controller:	null,			//videogular
+		controller_sce: null,		//videogular_sce
+		controller_timeout: null,	//videogulat_timeout func
+		first_login: true,	
+		
+		stored_playlist: {},		//хранимый список каналов
+		stored_playlist_time:  0,	//время получения списка каналов
+		
+		//снапшоты времени сервер и наши, чтобы понять разницу во времени
+		servertime: 0,
+		currenttime: 0,
+		
+		current_video_id: -1,		//текущий канал
+		
+		// ------------------------------------------ display_atlogon_info --------------------------------------------------------------
+		display_atlogon_info: function(text) {
+			document.getElementById('showErrors').innerHTML = "<p class='white'>"+text+"</p>";
+		},
+		
+		// ------------------------------------------ check_server_error --------------------------------------------------------------
+		//проверка ответа сервера на наличие ошибок
+		check_server_error: function(data) {
+			if (data.error !== undefined) {
+				return { error: true, code: data.error.code, message: data.error.message }
+			};
+			return { error: false };
+		},
+
+		// ------------------------------------------ загрузка плейлиста --------------------------------------------------------------
+		//загрузка плейлиста (делаем действительную загрузку не чаще, чем раз в 6 секунд)
+		onload_playlist: function(data) {
+			var pl = GeneralKartinaPlayer;
+			console.log("onload_playlist");
+			//проверяем что все хорошо
+			var cse = pl.check_server_error(data);
+			if (cse.error) { //сервер вернул ошибку
+				if (pl.first_login) { //когда попали сюда первый раз, ошибка могла быть что мы не залогонились
+					pl.first_login = false;
+					pl.login();	//1.1. делаем попытку входа с введенными значениями
+				} else {
+					console.log("Критическая ошибка. Код: "+cse.code+" Текст: "+cse.message);
+					pl.display_atlogon_info("Критическая ошибка. Код: "+cse.code+" Текст: "+cse.message);
+				};
+			} else {	
+				if (typeof data.groups !== 'undefined') {
+					//сохраняем плейлист и таймштамп его получения
+					pl.stored_playlist = data;
+					pl.stored_playlist_time = Date.now();
+										
+					document.getElementById('playlist_group_names').innerHTML = "";
+					document.getElementById('playlist_group_channels').innerHTML = "";
+					var inner_group_names = "";
+					var playlist_group_channels = "";
+					//заполняем названия групп (табы)
+					for (var i=0; i<data.groups.length; i++) {
+						var g = data.groups[i];
+						var group_name = data.groups[i].name;
+						inner_group_names += "<li><a data-toggle='tab' href='#group_ch"+i+"'>"+group_name+"</a></li>";
+						var ch_num = 1;
+						playlist_group_channels += "<div id='group_ch"+i+"' class='tab-pane fade'><ol>";
+						for (var j=0; j<g.channels.length; j++) {
+							var ch = g.channels[j];
+							var progname = "";
+							if (typeof ch.epg_progname !== 'undefined') {
+								progname = " ("+ch.epg_progname+")";
+							};
+							
+							if (ch.is_video==0) continue;
+							
+							playlist_group_channels += "<li><a onclick='GeneralKartinaPlayer.set_video("+ch.id+");'>"+ch_num+". <b>"+ch.name+"</b>"+progname+"</a></p></li>";
+							ch_num++;
+						};
+						playlist_group_channels += "</ol></div>";
+					};
+					document.getElementById('playlist_group_channels').innerHTML = playlist_group_channels;
+					document.getElementById('playlist_group_names').innerHTML = inner_group_names;
+					
+					pl.show_playlist();
+				} else {
+					console.log("Отсутствуют каналы: "+out);
+					pl.display_atlogon_info("Критическая ошибка. Отсутствуют каналы!");
+				};						
+			};
+		},
+		
+		// ------------------------------------------ загрузка плейлиста --------------------------------------------------------------
+		//загрузка плейлиста (делаем действительную загрузку не чаще, чем раз в _указано_ секунд)
+		load_playlist: function() {
+			console.log("load_playlist");
+			this.display_atlogon_info("Загрузка плейлиста...");			
+			var now = Date.now();
+			console.log("now="+now+" old="+this.stored_playlist_time+" ref="+this.stored_playlist_refresh);
+			if ((now - this.stored_playlist_time) > this.stored_playlist_refresh) { //обновляем плейлист ?
+				console.log("need refresh playlist");
+				this.helper.run(this.server_url+"/api/json/channel_list", null, this.onload_playlist);
+			} else { // используем старый
+				console.log("use old playlist");
+				this.show_playlist();
+			};
+		},
+		
+		// ------------------------------------------ set_video --------------------------------------------------------------
+		//запуск вещания указанного канала
+		on_set_video: function(data) {
+			var pl = GeneralKartinaPlayer;
+			console.log("on_set_video");
+			
+			//проверяем что все хорошо
+			var cse = pl.check_server_error(data);
+			if (cse.error) { //сервер вернул ошибку
+				if (pl.first_login) { //когда попали сюда первый раз, ошибка могла быть что мы не залогонились
+					pl.first_login = false;
+					pl.login();	//1.1. делаем попытку входа с введенными значениями
+				} else {
+					console.log("Критическая ошибка. Код: "+cse.code+" Текст: "+cse.message);
+					pl.display_atlogon_info("Критическая ошибка. Код: "+cse.code+" Текст: "+cse.message);
+				};
+			} else {	
+				if (typeof data.url !== 'undefined') {
+					var url = data.url;
+					
+					var new_src = [
+						{src: pl.controller_sce.trustAsResourceUrl(url), type: "application/x-mpegURL"}
+						//{src: url, type: "application/x-mpegURL"}
+					];
+															
+					pl.controller.config.sources = new_src; //controller.videos[0].sources;
+					pl.controller_timeout(pl.controller.API.play.bind(pl.controller.API), 100);
+					pl.show_player();
+				};
+			};
+		},
+		
+		// ------------------------------------------ set_video --------------------------------------------------------------
+		//запуск вещания указанного канала
+		set_video: function(id) {
+			if (this.current_video_id !== -1)
+				controller.API.Stop();
+				
+			var param = [];
+			param["cid"] = id;
+			this.helper.run(this.server_url+"/api/json/get_url", param, this.on_set_video);
+		},
+		
+		// ------------------------------------------ set_config --------------------------------------------------------------
+		//установка настройки - формат вещания и переход на страницу плейлиста
+		set_config: function() {
+			console.log("set_config");
+			var param = {
+				var: "stream_standard",
+				val: document.getElementById('format').value
+			};
+			this.helper.run(this.server_url+"/api/json/settings_set", param, this.load_playlist);
+		},
+		
+		// ------------------------------------------ on_account --------------------------------------------------------------
+		//1. проверка успешности входа
+		on_account: function(data) {
+			var pl = GeneralKartinaPlayer;
+			console.log("on_account:" + data);
+			if (data.servertime !== 'undefined') {
+				pl.servertime = data.servertime; //отмечаем снапшоты серверного и нашего времени
+				pl.currenttime = Date.now(); //текущее время
+				
+				var cse = pl.check_server_error(data);
+				if (cse.error) { //сервер вернул ошибку
+					if (pl.first_login) { //когда попали сюда первый раз, ошибка могла быть что мы не залогонились
+						pl.first_login = false;
+					} else {
+						console.log("Критическая ошибка. Код: "+cse.code+" Текст: "+cse.message);
+						pl.display_atlogon_info("Критическая ошибка. Код: "+cse.code+" Текст: "+cse.message);
+					}
+				} else {
+					//2. проверяем, выставлен сейчас показ hls или нет
+					if (data.settings !== undefined)
+						if (data.settings.stream_standart !== undefined) {
+							var standart = data.settings.stream_standart;
+							if (standart.value !== undefined)
+								if (standart.value !== 'hls_h264') {	//3. если hls не выставлен, то выставляем его
+									pl.set_config();							
+								};
+						};
+					//4. мы уже вошли, все хорошо, загружаем плейлист
+					pl.load_playlist();
+				};
+			} else {
+				pl.display_atlogon_info("Критическая ошибка входа...");		
+			}			
+		},
+		
+		// ------------------------------------------ test_login --------------------------------------------------------------
+		// 1. Делаем вызов account (&settings=1) проверка что мы уже вошли
+		test_login: function() {
+			console.log("test_login");
+			this.helper.run(this.server_url+"/api/json/account", {settings: 1}, this.on_account);
+		},	
+		
+		// ------------------------------------------ on_logout --------------------------------------------------------------
+		on_logout: function() {
+			var pl = GeneralKartinaPlayer;			
+			pl.display_atlogon_info("");
+			pl.show_logon();
+		},
+		
+		// ------------------------------------------ logout --------------------------------------------------------------
+		logout: function() {
+			this.display_atlogon_info("Проверка входа...");			
+			this.helper.run(this.server_url+"/api/json/logout", null, this.on_logout);
+		},
+		
 		// ------------------------------------------ logon --------------------------------------------------------------
-		//делаем logon, возвращаем true/false
-		logon: function() {},
-		
-		// ------------------------------------------ play --------------------------------------------------------------
-		//запуск проигрывания канала
-		play: function() {},
-		
-		// ------------------------------------------ build --------------------------------------------------------------
+		login: function() {
+			console.log("login");
+			//1. делаем новый вход в сервера
+			this.display_atlogon_info("Входим...");	
+			
+			var login = document.getElementById('user_login').value;
+			var pass = document.getElementById('user_pass').value;
+			
+			var formData = {
+				login: login,
+				pass:  pass,
+				softid: "web-ktv-002",
+				cli_serial: "some_val"	//TODO FIXME Ожидаем значения от Сергея
+			};	
+				
+			this.helper.run(this.server_url+"/api/json/login", formData, this.on_account);
+		},
+
+		// ------------------------------------------ run --------------------------------------------------------------
 		//запуск построения плеера
-		build: function() {
-			angular.module(this.name,
+		run: function() {
+			var this_obj = this;
+			angular.module("KartinaPlayerApp",
 				[
 					"ngSanitize",
 					"com.2fdevs.videogular",
@@ -145,282 +400,23 @@ function KartinaPlayerFactory(properties) {
 						}
 					};
 					
-					controller.getVideoLink = function(id) {
-						var params = [];
-						params["cid"] = id;
-						controller.doGet(server_url + "/api/json/get_url", params, function(out){
-							if (typeof out.url !== 'undefined') {
-								var url = out.url;
-								
-								// начало блока, который требуется только при проксировании через localhost			
-								if (url.indexOf("http/ts://")==0) {
-									url = "http://" + url.substr(10,url.length-10);
-								};
-								// -------
-
-								//alert(url);
-
-								var new_src = [
-									{src: $sce.trustAsResourceUrl(url), type: "application/x-mpegURL"}
-									//{src: url, type: "application/x-mpegURL"}
-								];
-																		
-								controller.config.sources = new_src; //controller.videos[0].sources;
-								$timeout(controller.API.play.bind(controller.API), 100);
-								$('.nav-tabs a[href="#panel2"]').tab('show');
-							}
-						});
-					}
-
-					controller.setVideo = function(index) {
-						//controller.API.clearMedia();
-						controller.set_config();
-						controller.getVideoLink(index);
-					};
-					
-					controller.logout = function() {
-						document.getElementById('showErrors').innerHTML = "";
-						$('.nav-tabs a[href="#panel1"]').tab('show');	
-					};
-					
-					controller.show_playlist = function() {
-						$('.nav-tabs a[href="#panel3"]').tab('show');	
-					}
-					
-					controller.show_config = function() {
-						$('.nav-tabs a[href="#panel4"]').tab('show');	
-						document.getElementById('showErrorsCfg').innerHTML = "";
-					}
-					
-					controller.set_config = function() {
-						var param = {
-							var: "stream_standard",
-							val: document.getElementById('format').value
-						};
-						controller.doGet(server_url + "/api/json/settings_set", param, function(out) {
-							controller.show_playlist();
-						});
-					}			
-								
-					controller.doPost = function(urlstr, formData, func) {
-						controller.doGet(urlstr, formData, func);				
-					};
-					
-					controller.doGet = function(urlstr, formData, func) {
-						on_callback = func;
-						var params = "";
-						var was_here = 0;
-						if (formData!==null || urlstr[-1] !== '?') params += "?";				
-						for (var key in formData) {
-							if (was_here>0) params += "&";	
-							
-							params += key + "=" + formData[key];
-							was_here++;
-						}	
-						addScript(urlstr + params+'&callback=jsonp_get');
-					};
-					
-					controller.unixToLocal = function(tm) {
-						// Create a new JavaScript Date object based on the timestamp
-						// multiplied by 1000 so that the argument is in milliseconds, not seconds.
-						var date = new Date(unix_timestamp*1000);
-						// Hours part from the timestamp
-						var hours = date.getHours();
-						// Minutes part from the timestamp
-						var minutes = "0" + date.getMinutes();
-						// Seconds part from the timestamp
-						var seconds = "0" + date.getSeconds();
-
-						// Will display time in 10:30:23 format
-						var formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
-						return formattedTime;
-					}
-
-					
-					controller.doLogin = function(index) {
-						document.getElementById('showErrors').innerHTML = "<p class='white'>Входим...</p>";
-					
-						var login = document.getElementById('user_login').value;
-						var pass = document.getElementById('user_pass').value;
-						
-						new Fingerprint2().get(function(result, components){
-							var formData = {
-								login: login,
-								pass:  pass,
-								softid: "web-ktv-002",
-								cli_serial: "some_val"
-							};	
-							
-							//1. делать вызов account перед login   &settings=1 
-							//если там есть hls то все работает					
-							//2. если не прошел аккаунт то логин
-							//3. аккаунт для получения настроек для проверки хлс
-							//4. если есть текущий хлс то ничего, если не стоит, то там же смотрю 
-							//http://rustvt.kartina.tv/api/json/account?settings=1
-							//http://rustvt.kartina.tv/api/json/logout
-							//5. проставляю настройки
-							
-							controller.doPost(server_url + "/api/json/login", formData, function(out) {
-								set_video = controller.setVideo;
-								if (typeof out.sid !== 'undefined') {
-										controller.doGet(server_url + "/api/json/channel_list", null, function(out){
-											if (typeof out.groups !== 'undefined') {
-												controller.playlist = out;
-												
-												document.getElementById('playlist_group_names').innerHTML = "";
-												document.getElementById('playlist_group_channels').innerHTML = "";
-												var inner_group_names = "";
-												var playlist_group_channels = "";
-												//заполняем названия групп (табы)
-												for (var i=0; i<out.groups.length; i++) {
-													var g = out.groups[i];
-													var group_name = out.groups[i].name;
-													inner_group_names += "<li><a data-toggle='tab' href='#group_ch"+i+"'>"+group_name+"</a></li>";
-													var ch_num = 1;
-													playlist_group_channels += "<div id='group_ch"+i+"' class='tab-pane fade'><ol>";
-													for (var j=0; j<g.channels.length; j++) {
-														var ch = g.channels[j];
-														var progname = "";
-														if (typeof ch.epg_progname !== 'undefined') {
-															progname = " ("+ch.epg_progname+")";
-														};
-														
-														if (ch.is_video==0) continue;
-														
-														playlist_group_channels += "<li><a onclick='set_video("+ch.id+");'>"+ch_num+". <b>"+ch.name+"</b>"+progname+"</a></p></li>";
-														ch_num++;
-														 //
-													};
-													playlist_group_channels += "</ol></div>";
-												};
-												document.getElementById('playlist_group_channels').innerHTML = playlist_group_channels;
-												document.getElementById('playlist_group_names').innerHTML = inner_group_names;
-												controller.show_playlist();
-											} else {
-												//console.log(out);
-												var outstr = JSON.stringify(out);
-												document.getElementById('showErrors').innerHTML = outstr;
-											};
-										});
-								} else {
-									//console.log(out);
-									var outstr = JSON.stringify(out);
-									document.getElementById('showErrors').innerHTML = outstr;
-								}
-							});
-						});
-					};
+					controller.__proto__ = this_obj;
+					this_obj.controller = controller;
+					this_obj.controller_sce = $sce;
+					this_obj.controller_timeout = $timeout;
 				}]
 			); //controller
-		},
-		
-		// ------------------------------------------ div --------------------------------------------------------------
-		// получить собранный div объекта
-		div: function() {
-			var div = document.createElement('div');
-			div.innerHTML = `
-	<div ng-app=${this.name}>
-	<div ng-controller="HomeCtrl as controller">
-
-		<ul class="nav nav-tabs hide">
-			<li class="active"><a data-toggle="tab" href="#panel1">Форма логона</a></li>
-			<li><a data-toggle="tab" href="#panel2">Плеер</a></li>
-		    <li><a data-toggle="tab" href="#panel3">Плейлист</a></li>
-			<li><a data-toggle="tab" href="#panel4">Настройки</a></li>
-		</ul>
-		 
-		<div class="tab-content">
-			<div id="panel1" class="tab-pane fade in active">
-				<div class="videogular-container black">
-					<br><br><br> <!-- FIX ME, im not a designer =( -->
-					<div class="logon">
-						<div class="input-group">
-							<span class="input-group-addon" id="basic-addon1">KARTINA<br>LOGO</span>
-							<input id="user_login" type="text" class="form-control" placeholder="Логин" aria-describedby="basic-addon1" value="857957">
-							<input id="user_pass" type="text" class="form-control" placeholder="Пароль" aria-describedby="basic-addon1" value="846690">
-						</div>
-						<div align="right"> <button ng-click="controller.doLogin();" type="button" class="btn btn-default">Войти</button> </div>
-						<p id="showErrors"></p>
-					</div>					
-				</div>
-		  </div>
-		  <div id="panel2" class="tab-pane fade">
-				<div class="videogular-container">
-					<videogular vg-player-ready="controller.onPlayerReady($API)" vg-complete="controller.onCompleteVideo()" vg-theme="controller.config.theme.url">
-						<vg-media vg-src="controller.config.sources" vg-hls
-								  vg-tracks="controller.config.tracks">
-						</vg-media>
-
-						<vg-controls>
-							<vg-play-pause-button></vg-play-pause-button>
-							<vg-time-display>{{ currentTime | date:'mm:ss':'+0000' }}</vg-time-display>
-							<vg-scrub-bar>
-								<vg-scrub-bar-current-time></vg-scrub-bar-current-time>
-							</vg-scrub-bar>
-							<vg-time-display>{{ timeLeft | date:'mm:ss':'+0000' }}</vg-time-display>
-							<vg-volume>
-								<vg-mute-button></vg-mute-button>
-								<vg-volume-bar></vg-volume-bar>
-							</vg-volume>
-							<vg-fullscreen-button></vg-fullscreen-button>
-								<div class="my-button iconButton"><a ng-click="controller.show_config();" target="_blank">Настройки</a></div>
-								<div class="my-button iconButton"><a ng-click="controller.show_playlist();" target="_blank">Плейлист</a></div>
-								<div class="my-button iconButton"><a ng-click="controller.logout();"  target="_blank">Выход</a></div>
-						</vg-controls>
-
-						<vg-overlay-play></vg-overlay-play>
-						<vg-buffering></vg-buffering>
-						<vg-poster vg-url="controller.config.plugins.poster"></vg-poster>
-					</videogular>
-				</div>
-		  </div>
-		  <div id="panel3" class="tab-pane fade">
-				<div class="videogular-container">
-					<div class="playlist scroll" id="playlist">					
-						<ul class="nav nav-tabs" id="playlist_group_names">
-							<li class="active"><a data-toggle="tab" href="#group_ch1">group_ch1</a></li>
-							<li><a data-toggle="tab" href="#group_ch2">group_ch2</a></li>
-						</ul>
-						<div class="tab-content" id="playlist_group_channels" ng-click="chooseChannel($event)">
-							<div id="group_ch1" class="tab-pane fade">
-								
-							</div>
-							<div id="group_ch2" class="tab-pane fade">
-							</div>						
-						</div>
-					</div>		
-				</div>
-		  </div>
-		  <div id="panel4" class="tab-pane fade">
-			<div class="logon">
-				<p>Формат вещания (http_h264, dash_hevc, hls_h264, udt_h264)</p> 
-				<input id="format" type="text" class="form-control" placeholder="Формат вещания" aria-describedby="basic-addon1" value="hls_h264">
-				<button ng-click="controller.set_config();" type="button" class="btn btn-default">Установить</button>
-				<p id="showErrorsCfg"></p>
-			</div>
-		  </div>
-		</div>
-
-	</div>
-	</div>		
-`;	
-		return div;
-		} //div		
-		
-	};	//имена прототипов методов
-		
-
-	// ------------------------------------------ собираем плеер --------------------------------------------------------------
-	//возвращаемый объект плеера
-	var player = Object.create(null);
-		
-	//свойства		
-	player.server_url = properties.server_url;		
-	player.name = "player"+Date.now();
-		
-	//методы
-	player.prototype = prototypes;
+			
+			//начинаем незамедлительный вход, если мы уже были залогонены
+			if (this.autologin)
+				this.test_login();
+		} //run
+	};
 	
+	//учим плеер управлять вкладками
+	player.__proto__ = pager;
+	
+	GeneralKartinaPlayer = player;
 	return player;
 };
 
@@ -434,4 +430,28 @@ if (!Date.now) {
 function dump(a) {
 	var str = JSON.stringify(a, null, 4);
 	console.log(str);
+};
+
+//human time
+function unixToLocal(tm) {
+	// Create a new JavaScript Date object based on the timestamp
+	// multiplied by 1000 so that the argument is in milliseconds, not seconds.
+	var date = new Date(unix_timestamp*1000);
+	// Hours part from the timestamp
+	var hours = date.getHours();
+	// Minutes part from the timestamp
+	var minutes = "0" + date.getMinutes();
+	// Seconds part from the timestamp
+	var seconds = "0" + date.getSeconds();
+
+	// Will display time in 10:30:23 format
+	var formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+	return formattedTime;
+} 
+
+//вернуть глобальное имя объекта
+//TODO FIXME как быстрее и проще?
+function getGlobalName(a) {
+	for(var n in window) if(window[n] === a) return n;
+	return 'notfound';
 }
