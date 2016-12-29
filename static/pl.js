@@ -68,10 +68,11 @@ angular.module('myApp',
 						// -------
 
 						//alert(url);
+						url = "http://91.224.186.15:8200/hls/2/index.m3u8?ticket=PsoLIVcrUgmNUdUQIkXv3Onte7e6Hp4KLmeh4qFIvP8w1n2ShyC7WzMea6s2jlJWobAytgYCTdwk2IKS10UKm7KiVojFfLRn44GS8g%2BtmjrdoqRI1333XW9h1z%2FL3Ajv%2Foa9OhIgsgEBBukABrmqUOx9GRo2njdQANi4JAJC7iwLmbcUx63HHXf0dNtSKalZFNU05%2BgYzGuLDJWuaMs%2BCsfubO%2FP%2FRJZKFL4PUr6bp9Jg2k2CvM81lO47Am%2BFBMu6MQhFMIgNgp2QVEmS7IFaP8ZXQz6i0qjsYe8Vzz5hd9yyuXO1U3%2Fsw7QTTubESDzo2tgCq2Zo9jLeHUx9M4a1A%3D%3D";
 						
 						var new_src = [
-							//{src: $sce.trustAsResourceUrl(url), type: "application/x-mpegURL"}
-							{src: url, type: "application/x-mpegURL"}
+							{src: $sce.trustAsResourceUrl(url), type: "application/x-mpegURL"}
+							//{src: url, type: "application/x-mpegURL"}
 						];
 																
 						controller.config.sources = new_src; //controller.videos[0].sources;
@@ -159,7 +160,16 @@ angular.module('myApp',
 						softid: "web-ktv-002",
 						cli_serial: "some_val"
 					};	
-
+					
+					//1. делать вызов account перед login   &settings=1 
+					//если там есть hls то все работает					
+					//2. если не прошел аккаунт то логин
+					//3. аккаунт для получения настроек для проверки хлс
+					//4. если есть текущий хлс то ничего, если не стоит, то там же смотрю 
+					//http://rustvt.kartina.tv/api/json/account?settings=1
+					//http://rustvt.kartina.tv/api/json/logout
+					//5. проставляю настройки
+					
 					controller.doPost(server_url + "/api/jsonp/login", formData, function(out) {
 						set_video = controller.setVideo;
 						if (typeof out.sid !== 'undefined') {
