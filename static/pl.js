@@ -57,7 +57,7 @@ angular.module('myApp',
 			controller.getVideoLink = function(id) {
 				var params = [];
 				params["cid"] = id;
-				controller.doGet(server_url + "/api/jsonp/get_url", params, function(out){
+				controller.doGet(server_url + "/api/json/get_url", params, function(out){
 					if (typeof out.url !== 'undefined') {
 						var url = out.url;
 						
