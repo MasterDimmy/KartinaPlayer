@@ -68,8 +68,8 @@ angular.module('myApp',
 						// -------
 
 						//alert(url);
-						url = "http://91.224.186.15:8200/hls/2/index.m3u8?ticket=PsoLIVcrUgmNUdUQIkXv3Onte7e6Hp4KLmeh4qFIvP8w1n2ShyC7WzMea6s2jlJWobAytgYCTdwk2IKS10UKm7KiVojFfLRn44GS8g%2BtmjrdoqRI1333XW9h1z%2FL3Ajv%2Foa9OhIgsgEBBukABrmqUOx9GRo2njdQANi4JAJC7iwLmbcUx63HHXf0dNtSKalZFNU05%2BgYzGuLDJWuaMs%2BCsfubO%2FP%2FRJZKFL4PUr6bp9Jg2k2CvM81lO47Am%2BFBMu6MQhFMIgNgp2QVEmS7IFaP8ZXQz6i0qjsYe8Vzz5hd9yyuXO1U3%2Fsw7QTTubESDzo2tgCq2Zo9jLeHUx9M4a1A%3D%3D";
-						
+						/*url = "http://91.224.186.15:8200/hls/2/index.m3u8?ticket=PsoLIVcrUgmNUdUQIkXv3Onte7e6Hp4KLmeh4qFIvP8w1n2ShyC7WzMea6s2jlJWobAytgYCTdwk2IKS10UKm7KiVojFfLRn44GS8g%2BtmjrdoqRI1333XW9h1z%2FL3Ajv%2Foa9OhIgsgEBBukABrmqUOx9GRo2njdQANi4JAJC7iwLmbcUx63HHXf0dNtSKalZFNU05%2BgYzGuLDJWuaMs%2BCsfubO%2FP%2FRJZKFL4PUr6bp9Jg2k2CvM81lO47Am%2BFBMu6MQhFMIgNgp2QVEmS7IFaP8ZXQz6i0qjsYe8Vzz5hd9yyuXO1U3%2Fsw7QTTubESDzo2tgCq2Zo9jLeHUx9M4a1A%3D%3D";
+						*/
 						var new_src = [
 							{src: $sce.trustAsResourceUrl(url), type: "application/x-mpegURL"}
 							//{src: url, type: "application/x-mpegURL"}
@@ -107,7 +107,7 @@ angular.module('myApp',
 					var: "stream_standard",
 					val: document.getElementById('format').value
 				};
-				controller.doGet(server_url + "/api/jsonp/settings_set", param, function(out) {
+				controller.doGet(server_url + "/api/json/settings_set", param, function(out) {
 					controller.show_playlist();
 				});
 			}			
@@ -170,10 +170,10 @@ angular.module('myApp',
 					//http://rustvt.kartina.tv/api/json/logout
 					//5. проставляю настройки
 					
-					controller.doPost(server_url + "/api/jsonp/login", formData, function(out) {
+					controller.doPost(server_url + "/api/json/login", formData, function(out) {
 						set_video = controller.setVideo;
 						if (typeof out.sid !== 'undefined') {
-								controller.doGet(server_url + "/api/jsonp/channel_list", null, function(out){
+								controller.doGet(server_url + "/api/json/channel_list", null, function(out){
 									if (typeof out.groups !== 'undefined') {
 										controller.playlist = out;
 										
