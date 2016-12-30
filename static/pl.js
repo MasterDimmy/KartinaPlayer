@@ -454,9 +454,10 @@ function KartinaPlayerFactory(properties) {
 		
 		// ------------------------------------------ logout --------------------------------------------------------------
 		logout: function() {
-			if (this.current_video_id !== -1)
-				controller.API.Stop();		
-			this.helper.run(this.server_url+"/api/json/logout", null, this.on_logout);
+			var pl = GeneralKartinaPlayer;			
+			if (pl.current_video_id !== -1)
+				pl.controller.API.pause();		
+			pl.helper.run(pl.server_url+"/api/json/logout", null, pl.on_logout);
 		},
 		
 		// ------------------------------------------ logon --------------------------------------------------------------
