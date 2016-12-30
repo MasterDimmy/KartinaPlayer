@@ -131,6 +131,17 @@ html , body, .player_body {
 	color: white;
 }
 
+.hide {
+	display: none;
+}
+
+.block {
+	display: block;
+}
+
+.progressTimer {
+}
+
 videogular div.my-button {
     display: table-cell;
     width: 50px;

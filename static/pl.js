@@ -131,6 +131,61 @@ function KartinaPlayerFactory(properties) {
 			return { error: false };
 		},
 		
+		// ------------------------------------------ show_timeline --------------------------------------------------------------
+		//показать прогрессбар выбора времени для проигрывания архива
+		show_timeline: function(id) {
+			console.log("show_timeline: "+id);
+						
+			//1. прячем все другие архивы с экрана
+			var progressTimer = document.querySelectorAll("progressTimer block");
+			if (progressTimer !== null) {
+				for (var i=0; i< progressTimer.length; i++) {
+					var p = progressTimer[i];
+					console.log(p);
+					var id = p.getAttribute('id')
+					if (id !== null) {
+						var $pp = $("#"+id);
+						if (pp.hasClass('block')) {
+							pp.removeClass('block');
+							pp.addClass('hide');
+						};
+					};
+				};
+			};
+
+			//2. показываем наш архив
+			var progressTimer = $("#progressTimer"+id);
+			progressTimer.removeClass('hide');
+			progressTimer.addClass('block');
+			document.getElementById("progressTimer"+id).innerHTML = "some text";
+			
+			var progressTimerTime = $("#progressTimerTime"+id);
+			progressTimerTime.removeClass('hide');
+			progressTimerTime.addClass('block');
+			document.getElementById("progressTimerTime"+id).innerHTML = "время";
+			
+			
+			/*var start = new Date();
+			var maxTime = 835000;
+			var timeoutVal = Math.floor(maxTime/100);
+			animateUpdate();
+
+			function updateProgress(percentage) {
+				$('#pbar_innerdiv').css("width", percentage + "%");
+				$('#pbar_innertext').text(percentage + "%");
+			}
+
+			function animateUpdate() {
+				var now = new Date();
+				var timeDiff = now.getTime() - start.getTime();
+				var perc = Math.round((timeDiff/maxTime)*100);
+				  if (perc <= 100) {
+				   updateProgress(perc);
+				   setTimeout(animateUpdate, timeoutVal);
+				  }
+			}*/
+		},
+		
 		// ------------------------------------------ дозагрузка иконок --------------------------------------------------------------
 		//делаем в момент коллапса, чтобы не вис браузер
 		on_collapse: function(target) {
@@ -145,7 +200,6 @@ function KartinaPlayerFactory(properties) {
 				var ch = childs[i];
 				var src = ch.getAttribute("src");
 				var load_src = ch.getAttribute("load_src");
-				console.log(load_src);
 				if (src === null && load_src!== null) {
 					ch.src = load_src;
 				};
@@ -219,7 +273,9 @@ function KartinaPlayerFactory(properties) {
 													<td width="100px">
 														<a onclick='GeneralKartinaPlayer.set_video("`+ch.id+`");'>`+ch.name+`</a>
 													</td>
-													<td>Архив</td>
+													<td>
+														<a onclick='GeneralKartinaPlayer.show_timeline("`+ch.id+`");'>Архив</a>										
+													</td>
 												</tr>
 												<tr>
 													<td colspan="2">
@@ -229,7 +285,16 @@ function KartinaPlayerFactory(properties) {
 											</table>
 										</td>
 									</tr>
-								</table>`;
+									<tr>
+										<td>
+											<div class="hide progressTimer" id="progressTimerTime`+ch.id+`"></div>
+										</td>
+										<td>
+											<div class="hide progressTimer" id="progressTimer`+ch.id+`"></div>
+										</td>
+									</tr>
+								</table>								
+								</li>`;
 							
 							ch_num++;
 						};
@@ -465,10 +530,13 @@ function KartinaPlayerFactory(properties) {
 			
 			//обозначаем свое событие на клик коллапса в плейлисте
 			document.querySelector('body').addEventListener('click', function(event) {
-				if (event.target.tagName.toLowerCase() === 'a')
-					if (event.target.getAttribute('id').indexOf("collapseA") !== -1) {
-						GeneralKartinaPlayer.on_collapse(event.target);
-					}
+				if (event.target.tagName.toLowerCase() === 'a') {
+					var id = event.target.getAttribute('id');
+					if (id !== null)
+						if (id.indexOf("collapseA") !== -1) {
+							GeneralKartinaPlayer.on_collapse(event.target);
+						};
+				}
 			});
 			
 			//начинаем незамедлительный вход, если мы уже были залогонены
