@@ -25,21 +25,6 @@
 	stored_playlist_refresh: 30  //предел времени хранения плейлиста, если прошло больше секунд, то делаем запрос, иначе возвращаем хранимый, по умолчанию равен 7
 }
 
-Методы: 
-Вызываются снаружи:
-	.div()						-- получить собранный div объекта
-	
-Внутренние:
-	.logon()					-- выполнить логон с введенными на форме значениями
-	.account()					-- получить информцию об текущем аккаунте
-	.stop()						-- стоп
-	.play(channel_id)			-- запуск канала
-	.pause()					-- пауза/плей
-	.channels()					-- получить в массив список id каналов
-	.catchup(channel_id)		-- получить архив по каналу
-	.getSettings()				-- получить настройки
-	.setSettings()				-- утановить настройки
-
 */
 
 'use strict';
@@ -95,15 +80,15 @@ function KartinaPlayerFactory(properties) {
 		show_logon: function() {
 			this.display_atlogon_info("");			
 			console.log("Переход на главную форму");	
-			$('.nav-tabs a[href="#player_logon"]').tab('show');			
+			this.controller_sce.data.selectedIndex = 0;		
 		},	
 		show_playlist: function() {
 			console.log("Начинаем показывать плейлист");	
-			$('.nav-tabs a[href="#player_playlist"]').tab('show');
+			this.controller_sce.data.selectedIndex = 2;			
 		},	
 		show_player: function() {
 			console.log("Показываем плеер");
-			$('.nav-tabs a[href="#player_view"]').tab('show');						
+			this.controller_sce.data.selectedIndex = 1;			
 		}
 	};
 
@@ -310,7 +295,6 @@ function KartinaPlayerFactory(properties) {
 		// 1. Делаем вызов account (&settings=1) проверка что мы уже вошли
 		test_login: function() {
 			console.log("test_login");
-			return;
 			this.helper.run(this.server_url+"/api/json/account", {settings: 1}, this.on_account);
 		},	
 		
@@ -374,6 +358,10 @@ function KartinaPlayerFactory(properties) {
 					controller.currentVideo = 0;
 					
 					controller.selectedTab = 0;
+					
+					$sce.data = {
+						selectedIndex: 0
+					};
 
 					controller.onPlayerReady = function(API) {
 						controller.API = API;
