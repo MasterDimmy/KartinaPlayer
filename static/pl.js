@@ -130,6 +130,27 @@ function KartinaPlayerFactory(properties) {
 			};
 			return { error: false };
 		},
+		
+		// ------------------------------------------ дозагрузка иконок --------------------------------------------------------------
+		//делаем в момент коллапса, чтобы не вис браузер
+		on_collapse: function(target) {
+			var id = target.getAttribute('id');
+			if (id === null) return;
+			if (id.length <= 9) return;
+			id = id.substring(9);
+			
+			var div = document.getElementById('collapse'+id);
+			var childs = div.querySelectorAll("img");
+			for (var i = 1; i < childs.length - 1; i++) {
+				var ch = childs[i];
+				var src = ch.getAttribute("src");
+				var load_src = ch.getAttribute("load_src");
+				console.log(load_src);
+				if (src === null && load_src!== null) {
+					ch.src = load_src;
+				};
+			};
+		},
 
 		// ------------------------------------------ загрузка плейлиста --------------------------------------------------------------
 		//загрузка плейлиста (делаем действительную загрузку не чаще, чем раз в 6 секунд)
@@ -151,7 +172,7 @@ function KartinaPlayerFactory(properties) {
 					//сохраняем плейлист и таймштамп его получения
 					pl.stored_playlist = data;
 					pl.stored_playlist_time = Date.now();
-										
+														
 					document.getElementById('accordion').innerHTML = "";
 					
 					var playlist = "<div class='panel panel-default'>";
@@ -164,7 +185,7 @@ function KartinaPlayerFactory(properties) {
 						playlist += `
 							<div class="panel-heading">
 							  <h4 class="panel-title">
-								<a data-toggle="collapse" data-parent="#accordion" href="#collapse`+i+`">
+								<a data-toggle="collapse" data-parent="#accordion" href="#collapse`+i+`" id="collapseA`+i+`">
 								`+ group_name +`</a>
 							  </h4>
 							</div>
@@ -189,7 +210,7 @@ function KartinaPlayerFactory(properties) {
 									<tr valign="top" width="100%">
 										<td width="40px">
 											<div align="center">
-												<img src="`+ch.icon_link+`" onclick='GeneralKartinaPlayer.set_video("`+ch.id+`");'>
+												<img load_src="`+ch.icon_link+`" onclick='GeneralKartinaPlayer.set_video("`+ch.id+`");'>
 											</div>
 										</td>
 										<td>
@@ -440,6 +461,15 @@ function KartinaPlayerFactory(properties) {
 					this_obj.controller_timeout = $timeout;
 				}]
 			); //controller
+			
+			
+			//обозначаем свое событие на клик коллапса в плейлисте
+			document.querySelector('body').addEventListener('click', function(event) {
+				if (event.target.tagName.toLowerCase() === 'a')
+					if (event.target.getAttribute('id').indexOf("collapseA") !== -1) {
+						GeneralKartinaPlayer.on_collapse(event.target);
+					}
+			});
 			
 			//начинаем незамедлительный вход, если мы уже были залогонены
 			if (this.autologin)
