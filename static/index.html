@@ -83,17 +83,32 @@
 		  <div id="player_playlist" class="tab-pane fade">
 				<div class="videogular-container">
 					<div class="playlist scroll" id="playlist">					
-						<ul class="nav nav-tabs" id="playlist_group_names">
+						 <div class="panel-group" id="accordion">
+						  <div class="panel panel-default">
+							<div class="panel-heading">
+							  <h4 class="panel-title">
+								<a data-toggle="collapse" data-parent="#accordion" href="#collapse1">
+								Collapsible Group 1</a>
+							  </h4>
+							</div>
+							<div id="collapse1" class="panel-collapse collapse in">
+							  <div class="panel-body">Lorem ipsum dolor sit amet, consectetur adipisicing elit,
+							  sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad
+							  minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+							  commodo consequat.</div>
+							</div>
+						  </div>
+						</div> 	
+						<!--ul class="nav nav-tabs" id="playlist_group_names">
 							<li class="active"><a data-toggle="tab" href="#group_ch1">group_ch1</a></li>
 							<li><a data-toggle="tab" href="#group_ch2">group_ch2</a></li>
 						</ul>
 						<div class="tab-content" id="playlist_group_channels" ng-click="chooseChannel($event)">
-							<div id="group_ch1" class="tab-pane fade">
-								
+							<div id="group_ch1" class="tab-pane fade">								
 							</div>
 							<div id="group_ch2" class="tab-pane fade">
 							</div>						
-						</div>
+						</div-->
 					</div>		
 				</div>
 		  </div>

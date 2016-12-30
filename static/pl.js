@@ -152,17 +152,28 @@ function KartinaPlayerFactory(properties) {
 					pl.stored_playlist = data;
 					pl.stored_playlist_time = Date.now();
 										
-					document.getElementById('playlist_group_names').innerHTML = "";
-					document.getElementById('playlist_group_channels').innerHTML = "";
-					var inner_group_names = "";
-					var playlist_group_channels = "";
+					document.getElementById('accordion').innerHTML = "";
+					
+					var playlist = "<div class='panel panel-default'>";
+					
 					//заполняем названия групп (табы)
 					for (var i=0; i<data.groups.length; i++) {
 						var g = data.groups[i];
 						var group_name = data.groups[i].name;
-						inner_group_names += "<li><a data-toggle='tab' href='#group_ch"+i+"'>"+group_name+"</a></li>";
+						
+						playlist += `
+							<div class="panel-heading">
+							  <h4 class="panel-title">
+								<a data-toggle="collapse" data-parent="#accordion" href="#collapse`+i+`">
+								`+ group_name +`</a>
+							  </h4>
+							</div>
+							<div id="collapse`+i+`" class="panel-collapse collapse">
+							  <div class="panel-body">
+							  <ol>
+							`;
+						
 						var ch_num = 1;
-						playlist_group_channels += "<div id='group_ch"+i+"' class='tab-pane fade'><ol>";
 						for (var j=0; j<g.channels.length; j++) {
 							var ch = g.channels[j];
 							var progname = "";
@@ -172,13 +183,39 @@ function KartinaPlayerFactory(properties) {
 							
 							if (ch.is_video==0) continue;
 							
-							playlist_group_channels += "<li><a onclick='GeneralKartinaPlayer.set_video("+ch.id+");'>"+ch_num+". <b>"+ch.name+"</b>"+progname+"</a></p></li>";
+							//playlist += "<li><a onclick='GeneralKartinaPlayer.set_video("+ch.id+");'>"+ch_num+". <b>"+ch.name+"</b>"+progname+"</a></p></li>";
+							playlist += `<li>
+								<table class="playlist_item" border="1">
+									<tr valign="top" width="100%">
+										<td width="40px">
+											<div align="center">
+												<img src="`+ch.icon_link+`" onclick='GeneralKartinaPlayer.set_video("`+ch.id+`");'>
+											</div>
+										</td>
+										<td>
+											<table class="playlist_item">
+												<tr>
+													<td width="100px">
+														<a onclick='GeneralKartinaPlayer.set_video("`+ch.id+`");'>`+ch.name+`</a>
+													</td>
+													<td>Архив</td>
+												</tr>
+												<tr>
+													<td colspan="2">
+														<a onclick='GeneralKartinaPlayer.set_video("`+ch.id+`");'>`+progname+`</a>
+													</td>
+												</tr>
+											</table>
+										</td>
+									</tr>
+								</table>`;
+							
 							ch_num++;
 						};
-						playlist_group_channels += "</ol></div>";
+						playlist += "</ol></div></div>";
 					};
-					document.getElementById('playlist_group_channels').innerHTML = playlist_group_channels;
-					document.getElementById('playlist_group_names').innerHTML = inner_group_names;
+					playlist += "</div>";
+					document.getElementById('accordion').innerHTML = playlist;
 					
 					pl.show_playlist();
 				} else {
