@@ -22,7 +22,16 @@
 
 		<!-- Latest compiled and minified JavaScript -->
 		<script src="./libs/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+		
+		<!-- Angular Material requires Angular.js Libraries -->
+		<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular.min.js"></script>
+		<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-animate.min.js"></script>
+		<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-aria.min.js"></script>
+		<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.5.5/angular-messages.min.js"></script>
 
+		<!-- Angular Material Library -->
+		<script src="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0/angular-material.min.js"></script>
+	  
 		<link rel="stylesheet" href="./pl.css" type="text/css">	
 	</head>
 
@@ -30,8 +39,48 @@
 	
 	<div id="KartinaPlayerApp" ng-app="KartinaPlayerApp">
 	<div ng-controller="HomeCtrl as controller">
+	
+	
+	
+	<div ng-controller="AppCtrl" ng-cloak="" class="tabsdemoStaticTabs" ng-app="MyApp">
+		  <md-content class="md-padding">
+				<md-tabs class="md-accent" md-selected="data.selectedIndex" md-align-tabs="top">
+					  <md-tab id="tab1">
+							<md-tab-label>{{data.firstLabel}}</md-tab-label>
+							<md-tab-body>
+								  View for Item #1 <br>
+								  data.selectedIndex = 0;
+							</md-tab-body>
+					  </md-tab>
+					  <md-tab id="tab2">
+							<md-tab-label>{{data.secondLabel}}</md-tab-label>
+							<md-tab-body>
+								  View for Item #2 <br>
+								  data.selectedIndex = 1;
+							</md-tab-body>
+					  </md-tab>
+					  <md-tab id="tab3">
+							<md-tab-label>Плейлист</md-tab-label>
+							<md-tab-body>
+								  View for Item #3 <br>
+								  data.selectedIndex = 2;
+							</md-tab-body>
+					  </md-tab>
+				</md-tabs>
+		  </md-content>
 
-		<ul class="nav nav-tabs hide">
+		  <div class="md-padding" layout="row" layout-sm="column" layout-align="left center" style="padding-top: 0;">
+				Здесь будет появляться таймбар для архива
+				<!--md-checkbox ng-model="data.secondLocked" aria-label="Disable item two?" style="margin: 5px;">
+					Disable item two?
+				</md-checkbox>
+				<md-checkbox ng-model="data.bottom" aria-label="Align tabs to bottom?" style="margin: 5px;">
+					Align tabs to bottom?
+				</md-checkbox-->
+		  </div>
+	</div>
+
+		<!--ul class="nav nav-tabs hide">
 			<li class="active"><a data-toggle="tab" href="#player_logon">Форма логона</a></li>
 			<li><a data-toggle="tab" href="#player_view">Плеер</a></li>
 		    <li><a data-toggle="tab" href="#player_playlist">Плейлист</a></li>
@@ -97,7 +146,7 @@
 					</div>		
 				</div>
 		  </div>
-		</div>
+		</div-->
 
 	</div>
 	</div>		
