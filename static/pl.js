@@ -282,11 +282,11 @@ function KartinaPlayerFactory(properties) {
 										<td>
 											<table class="playlist_item">
 												<tr>
-													<td width="100px">
+													<td width="400px">
 														<a onclick='GeneralKartinaPlayer.set_video("`+ch.id+`");'>`+ch.name+`</a>
 													</td>
 													<td>
-														<a onclick='GeneralKartinaPlayer.show_timeline("`+ch.id+`");'>Архив</a>										
+														<a onclick='GeneralKartinaPlayer.show_timeline("`+ch.id+`");'><b>Архив</b></a>										
 													</td>
 												</tr>
 												<tr>
