@@ -188,10 +188,10 @@ function KartinaPlayerFactory(properties) {
 					var bar_length = 2 * 7 * 24 * 60 * 60; //секунд в 2х неделях	//TODO FIXME читать это значение из stream_standard
 					
 					var offsetTime = Math.abs(width-x)*bar_length/width; //время которое показано в баре
-					var choosen_time = Math.floor(now - offsetTime - 6); //выбранное время на баре с учетом 6 секунд
+					var choosen_time = Math.floor(now - offsetTime - 6); //выбранное время на баре с учетом 6 секунд и ошибки в 1 час. GMT?
 					//console.log("now="+now+" offset="+offsetTime+" choosen="+choosen_time);
 					 
-					document.getElementById("progressTimerTime"+id).innerHTML = unixToLocal(choosen_time)+"<br>"+
+					document.getElementById("progressTimerTime"+id).innerHTML = unixToLocal(choosen_time - 60*60)+"<br>"+
 						`<a onclick='GeneralKartinaPlayer.set_video(`+id+`,`+choosen_time+`);'>Смотреть</a>`;
 					
 					//console.log("x="+x+" width="+width);
