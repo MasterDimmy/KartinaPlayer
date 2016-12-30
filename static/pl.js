@@ -79,15 +79,17 @@ function KartinaPlayerFactory(properties) {
 	var pager = {
 		show_logon: function() {
 			this.display_atlogon_info("");			
-			console.log("Переход на главную форму");	
+			//console.log("Переход на главную форму");	
 			$('.nav-tabs a[href="#player_logon"]').tab('show');			
 		},	
 		show_playlist: function() {
-			console.log("Начинаем показывать плейлист");	
+			if (this.current_video_id !== -1)
+				this.controller.API.pause();
+			//console.log("Начинаем показывать плейлист");	
 			$('.nav-tabs a[href="#player_playlist"]').tab('show');
 		},	
 		show_player: function() {
-			console.log("Показываем плеер");
+			//console.log("Показываем плеер");
 			$('.nav-tabs a[href="#player_view"]').tab('show');						
 		}
 	};
@@ -189,16 +191,17 @@ function KartinaPlayerFactory(properties) {
 		// ------------------------------------------ загрузка плейлиста --------------------------------------------------------------
 		//загрузка плейлиста (делаем действительную загрузку не чаще, чем раз в _указано_ секунд)
 		load_playlist: function() {
+			var pl = GeneralKartinaPlayer;
 			console.log("load_playlist");
-			this.display_atlogon_info("Загрузка плейлиста...");			
+			pl.display_atlogon_info("Загрузка плейлиста...");			
 			var now = Date.now();
-			console.log("now="+now+" old="+this.stored_playlist_time+" ref="+this.stored_playlist_refresh);
-			if ((now - this.stored_playlist_time) > this.stored_playlist_refresh) { //обновляем плейлист ?
+			console.log("now="+now+" old="+pl.stored_playlist_time+" ref="+pl.stored_playlist_refresh);
+			if ((now - pl.stored_playlist_time) > pl.stored_playlist_refresh) { //обновляем плейлист ?
 				console.log("need refresh playlist");
-				this.helper.run(this.server_url+"/api/json/channel_list", null, this.onload_playlist);
+				pl.helper.run(pl.server_url+"/api/json/channel_list", null, pl.onload_playlist);
 			} else { // используем старый
 				console.log("use old playlist");
-				this.show_playlist();
+				pl.show_playlist();
 			};
 		},
 		
@@ -206,7 +209,6 @@ function KartinaPlayerFactory(properties) {
 		//запуск вещания указанного канала
 		on_set_video: function(data) {
 			var pl = GeneralKartinaPlayer;
-			console.log("on_set_video");
 			
 			//проверяем что все хорошо
 			var cse = pl.check_server_error(data);
@@ -224,11 +226,20 @@ function KartinaPlayerFactory(properties) {
 					
 					var new_src = [
 						{src: pl.controller_sce.trustAsResourceUrl(url), type: "application/x-mpegURL"}
-						//{src: url, type: "application/x-mpegURL"}
 					];
+					
+					var delayed_bind = function() {
+						pl.controller.API.play.bind(pl.controller.API);
+						
+						var delayed_play = function() {
+							pl.controller.API.play();
+						}
+						
+						pl.controller_timeout(delayed_play, 2000);
+					};
 															
 					pl.controller.config.sources = new_src; //controller.videos[0].sources;
-					pl.controller_timeout(pl.controller.API.play.bind(pl.controller.API), 100);
+					pl.controller_timeout(delayed_bind, 100);
 					pl.show_player();
 				};
 			};
@@ -238,7 +249,7 @@ function KartinaPlayerFactory(properties) {
 		//запуск вещания указанного канала
 		set_video: function(id) {
 			if (this.current_video_id !== -1)
-				controller.API.Stop();
+				this.controller.API.pause();
 			this.current_video_id = id;			
 			var param = [];
 			param["cid"] = id;
@@ -382,7 +393,7 @@ function KartinaPlayerFactory(properties) {
 							url: "http://www.videogular.com/styles/themes/default/latest/videogular.css"
 						},
 						plugins: {
-							poster: "http://www.videogular.com/assets/images/videogular.png"  //TODO: KARTINA LOGO
+							poster: "http://kartina.tv/media/flash/1482509620.jpg"  //KARTINA INTRO FOR PLAYER
 						}
 					};
 					
