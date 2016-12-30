@@ -137,18 +137,19 @@ function KartinaPlayerFactory(properties) {
 			console.log("show_timeline: "+id);
 						
 			//1. прячем все другие архивы с экрана
-			var progressTimer = document.querySelectorAll("progressTimer block");
-			if (progressTimer !== null) {
+			var progressTimer = document.querySelectorAll("div .progressTimer");
+			if (progressTimer.length >0 ) {
 				for (var i=0; i< progressTimer.length; i++) {
 					var p = progressTimer[i];
-					console.log(p);
-					var id = p.getAttribute('id')
-					if (id !== null) {
+					var id2 = p.getAttribute('id')
+					if (id2 !== null) {
+						console.log("id2="+id2);
 						var $pp = $("#"+id);
-						if (pp.hasClass('block')) {
-							pp.removeClass('block');
-							pp.addClass('hide');
+						if ($pp.hasClass('block')) {
+							$pp.removeClass('block');
+							$pp.addClass('hide');
 						};
+						document.getElementById(id2).innerHTML = "";
 					};
 				};
 			};
