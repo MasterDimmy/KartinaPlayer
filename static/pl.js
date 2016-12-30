@@ -310,6 +310,7 @@ function KartinaPlayerFactory(properties) {
 		// 1. Делаем вызов account (&settings=1) проверка что мы уже вошли
 		test_login: function() {
 			console.log("test_login");
+			return;
 			this.helper.run(this.server_url+"/api/json/account", {settings: 1}, this.on_account);
 		},	
 		
@@ -345,24 +346,6 @@ function KartinaPlayerFactory(properties) {
 			this.helper.run(this.server_url+"/api/json/login", formData, this.on_account);
 		},
 		
-		// ------------------------------------------ initTabs --------------------------------------------------------------
-		//инициализация построения табов ngMaterial
-		initTabs: function ( scope ) {
-			scope.data = {
-				selectedIndex: 0,
-				firstLabel:    "Форма логона",
-				secondLabel:   "Плеер",
-				thirdLabel:    "Плейлист",
-				bottom:        false
-			};
-			scope.next = function() {
-				$scope.data.selectedIndex = Math.min($scope.data.selectedIndex + 1, 2) ;
-			};
-			scope.previous = function() {
-				$scope.data.selectedIndex = Math.max($scope.data.selectedIndex - 1, 0);
-			};
-		},
-
 		// ------------------------------------------ run --------------------------------------------------------------
 		//запуск построения плеера
 		run: function() {
@@ -389,6 +372,8 @@ function KartinaPlayerFactory(properties) {
 					controller.state = null;
 					controller.API = null;
 					controller.currentVideo = 0;
+					
+					controller.selectedTab = 0;
 
 					controller.onPlayerReady = function(API) {
 						controller.API = API;
@@ -427,8 +412,6 @@ function KartinaPlayerFactory(properties) {
 					this_obj.controller = controller;
 					this_obj.controller_sce = $sce;
 					this_obj.controller_timeout = $timeout;
-
-					this_obj.initTabs($scope); //создаем табы плеера
 				}]
 			); //controller
 			
