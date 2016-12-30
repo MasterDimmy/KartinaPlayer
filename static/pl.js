@@ -112,8 +112,8 @@ function KartinaPlayerFactory(properties) {
 		stored_playlist_time:  0,	//время получения списка каналов
 		
 		//снапшоты времени сервер и наши, чтобы понять разницу во времени
-		servertime: 0,
-		currenttime: 0,
+		servertime: 0,	//in sec
+		currenttime: 0, 
 		
 		current_video_id: -1,		//текущий канал
 		
@@ -143,7 +143,6 @@ function KartinaPlayerFactory(properties) {
 					var p = progressTimer[i];
 					var id2 = p.getAttribute('id')
 					if (id2 !== null) {
-						console.log("id2="+id2);
 						var $pp = $("#"+id);
 						if ($pp.hasClass('block')) {
 							$pp.removeClass('block');
@@ -158,33 +157,45 @@ function KartinaPlayerFactory(properties) {
 			var progressTimer = $("#progressTimer"+id);
 			progressTimer.removeClass('hide');
 			progressTimer.addClass('block');
-			document.getElementById("progressTimer"+id).innerHTML = "some text";
 			
 			var progressTimerTime = $("#progressTimerTime"+id);
 			progressTimerTime.removeClass('hide');
 			progressTimerTime.addClass('block');
-			document.getElementById("progressTimerTime"+id).innerHTML = "время";
 			
+			document.getElementById("progressTimerTime"+id).innerHTML = "--.-- --:--:--";
+
+			document.getElementById("progressTimer"+id).innerHTML = "";
 			
-			/*var start = new Date();
-			var maxTime = 835000;
-			var timeoutVal = Math.floor(maxTime/100);
-			animateUpdate();
-
-			function updateProgress(percentage) {
-				$('#pbar_innerdiv').css("width", percentage + "%");
-				$('#pbar_innertext').text(percentage + "%");
-			}
-
-			function animateUpdate() {
-				var now = new Date();
-				var timeDiff = now.getTime() - start.getTime();
-				var perc = Math.round((timeDiff/maxTime)*100);
-				  if (perc <= 100) {
-				   updateProgress(perc);
-				   setTimeout(animateUpdate, timeoutVal);
-				  }
-			}*/
+			progressTimer.progressTimer({
+				timeLimit: 1000,
+				baseStyle: 'progress-bar-info'
+			});
+			
+			document.getElementById("progressTimer"+id).addEventListener('mousedown', function (ev) {
+					var $div = $(ev.target);
+					var $display = $div.find('.display');
+					var offset = $div.offset();
+					var x = ev.clientX - offset.left;
+					var $pp = $("#progressTimer"+id);
+					var width = $pp.width(); 
+					$('.progress-bar').width(x);
+					
+					var pl = GeneralKartinaPlayer;
+					var server_offset = pl.currenttime - pl.servertime; //считаем что текущее время больше чем северное
+					var now = Date.now()/1000 - server_offset; //текущее серверное время
+					//console.log("server_offset time="+server_offset+" currenttime"+pl.currenttime+" servertime"+pl.servertime);
+		
+					var bar_length = 2 * 7 * 24 * 60 * 60; //секунд в 2х неделях	//TODO FIXME читать это значение из stream_standard
+					
+					var offsetTime = Math.abs(width-x)*bar_length/width; //время которое показано в баре
+					var choosen_time = Math.floor(now - offsetTime - 6); //выбранное время на баре с учетом 6 секунд
+					//console.log("now="+now+" offset="+offsetTime+" choosen="+choosen_time);
+					 
+					document.getElementById("progressTimerTime"+id).innerHTML = unixToLocal(choosen_time)+"<br>"+
+						`<a onclick='GeneralKartinaPlayer.set_video(`+id+`,`+choosen_time+`);'>Смотреть</a>`;
+					
+					//console.log("x="+x+" width="+width);
+			});			
 		},
 		
 		// ------------------------------------------ дозагрузка иконок --------------------------------------------------------------
@@ -263,7 +274,7 @@ function KartinaPlayerFactory(properties) {
 							playlist += `<li>
 								<table class="playlist_item" border="1">
 									<tr valign="top" width="100%">
-										<td width="40px">
+										<td width="100px">
 											<div align="center">
 												<img load_src="`+ch.icon_link+`" onclick='GeneralKartinaPlayer.set_video("`+ch.id+`");'>
 											</div>
@@ -371,12 +382,13 @@ function KartinaPlayerFactory(properties) {
 		
 		// ------------------------------------------ set_video --------------------------------------------------------------
 		//запуск вещания указанного канала
-		set_video: function(id) {
+		set_video: function(id, gmt) {
 			if (this.current_video_id !== -1)
 				this.controller.API.pause();
 			this.current_video_id = id;			
 			var param = [];
 			param["cid"] = id;
+			if (gmt !== null && gmt!==0) param["gmt"] = gmt; //добавляем время на архиве
 			this.helper.run(this.server_url+"/api/json/get_url", param, this.on_set_video);
 		},
 		
@@ -398,7 +410,7 @@ function KartinaPlayerFactory(properties) {
 			console.log("on_account:" + data);
 			if (data.servertime !== 'undefined') {
 				pl.servertime = data.servertime; //отмечаем снапшоты серверного и нашего времени
-				pl.currenttime = Date.now(); //текущее время
+				pl.currenttime = Date.now() / 1000; //текущее время in sec
 				
 				var cse = pl.check_server_error(data);
 				if (cse.error) { //сервер вернул ошибку
@@ -567,19 +579,16 @@ function dump(a) {
 
 //human time
 function unixToLocal(tm) {
-	// Create a new JavaScript Date object based on the timestamp
-	// multiplied by 1000 so that the argument is in milliseconds, not seconds.
-	var date = new Date(unix_timestamp*1000);
-	// Hours part from the timestamp
-	var hours = date.getHours();
-	// Minutes part from the timestamp
-	var minutes = "0" + date.getMinutes();
-	// Seconds part from the timestamp
-	var seconds = "0" + date.getSeconds();
+	var tm2 = Math.floor(tm*1000);	
+	var d = new Date( tm2 );	
+	var month = d.getMonth()+1;
+	var day = d.getDate();
+	var hour = d.getHours();
+	var minute = d.getMinutes();
+	var second = d.getSeconds();
 
-	// Will display time in 10:30:23 format
-	var formattedTime = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
-	return formattedTime;
+	var output = day+"."+month+" "+hour+":"+minute+":"+second;
+	return output;
 } 
 
 //вернуть глобальное имя объекта
@@ -588,3 +597,34 @@ function getGlobalName(a) {
 	for(var n in window) if(window[n] === a) return n;
 	return 'notfound';
 }
+
+//------------ progress timer
+(function ($) {
+    $.fn.progressTimer = function (options) {
+		var settings = $.extend({}, $.fn.progressTimer.defaults, options);
+
+        this.each(function () {
+            $(this).empty();
+            var barContainer = $("<div>").addClass("progress active progress-striped");
+            var bar = $("<div>").addClass("progress-bar").addClass(settings.baseStyle)
+                .attr("role", "progressbar")
+                .attr("aria-valuenow", "0")
+                .attr("aria-valuemin", "0")
+                .attr("aria-valuemax", settings.timeLimit);
+
+            bar.appendTo(barContainer);
+            barContainer.appendTo($(this));
+        });
+
+        return this;
+    };
+
+    $.fn.progressTimer.defaults = {
+        timeLimit: 10,  //total number of seconds
+        warningThreshold: 5,  //seconds remaining triggering switch to warning color
+        onFinish: function () {},  //invoked once the timer expires
+		baseStyle: '',  //bootstrap progress bar style at the beginning of the timer
+        warningStyle: 'progress-bar-danger',  //bootstrap progress bar style in the warning phase
+        completeStyle: 'progress-bar-success'  //bootstrap progress bar style at completion of timer
+    };
+}(jQuery));
