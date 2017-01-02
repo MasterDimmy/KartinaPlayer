@@ -248,7 +248,7 @@ function KartinaPlayerFactory(properties) {
 						var g = data.groups[i];
 						var group_name = data.groups[i].name;
 						
-						playlist += `
+						var playlist_group = `
 							<div class="panel-heading">
 							  <h4 class="panel-title">
 								<a data-toggle="collapse" data-parent="#accordion" href="#collapse`+i+`" id="collapseA`+i+`">
@@ -271,7 +271,7 @@ function KartinaPlayerFactory(properties) {
 							if (ch.is_video==0) continue;
 							
 							//playlist += "<li><a onclick='GeneralKartinaPlayer.set_video("+ch.id+");'>"+ch_num+". <b>"+ch.name+"</b>"+progname+"</a></p></li>";
-							playlist += `<li>
+							playlist_group += `<li>
 								<table class="playlist_item" border="1">
 									<tr valign="top" width="100%">
 										<td width="100px">
@@ -310,7 +310,10 @@ function KartinaPlayerFactory(properties) {
 							
 							ch_num++;
 						};
-						playlist += "</ol></div></div>";
+						playlist_group += "</ol></div></div>";
+						if (ch_num>1) { //скрываем пустые группы
+							playlist += playlist_group;
+						};
 					};
 					playlist += "</div>";
 					document.getElementById('accordion').innerHTML = playlist;
