@@ -213,7 +213,7 @@ function KartinaPlayerFactory(properties) {
 				var src = ch.getAttribute("src");
 				var load_src = ch.getAttribute("load_src");
 				if (src === null && load_src!== null) {
-					ch.src = load_src;
+					ch.src = load_src+"?"+Date.now();
 				};
 			};
 		},
