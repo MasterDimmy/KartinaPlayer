@@ -276,7 +276,7 @@ function KartinaPlayerFactory(properties) {
 									<tr valign="top" width="100%">
 										<td width="100px">
 											<div align="center">
-												<img load_src="`+ch.icon_link+`" onclick='GeneralKartinaPlayer.set_video("`+ch.id+`");'>
+												<img load_src="`+ch.big_icon_link+`" onclick='GeneralKartinaPlayer.set_video("`+ch.id+`");'>
 											</div>
 										</td>
 										<td>
@@ -333,7 +333,9 @@ function KartinaPlayerFactory(properties) {
 			console.log("now="+now+" old="+pl.stored_playlist_time+" ref="+pl.stored_playlist_refresh);
 			if ((now - pl.stored_playlist_time) > pl.stored_playlist_refresh) { //обновляем плейлист ?
 				console.log("need refresh playlist");
-				pl.helper.run(pl.server_url+"/api/json/channel_list", null, pl.onload_playlist);
+				var params = [];
+				params["icon"] = 3;
+				pl.helper.run(pl.server_url+"/api/json/channel_list", params, pl.onload_playlist);
 			} else { // используем старый
 				console.log("use old playlist");
 				pl.show_playlist();
