@@ -208,7 +208,7 @@ function KartinaPlayerFactory(properties) {
 			
 			var div = document.getElementById('collapse'+id);
 			var childs = div.querySelectorAll("img");
-			for (var i = 1; i < childs.length - 1; i++) {
+			for (var i = 0; i < childs.length; i++) {
 				var ch = childs[i];
 				var src = ch.getAttribute("src");
 				var load_src = ch.getAttribute("load_src");
