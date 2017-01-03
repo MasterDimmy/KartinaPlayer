@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,900&subset=cyrillic');
+
+body {
+    font-family: 'Roboto', sans-serif;
+}
+
+.btn-orange { background-image: -webkit-linear-gradient(45deg, #f76d1a 0%, #f98d0b 100%); background-image: -o-linear-gradient(45deg, #f76d1a 0%, #f98d0b 100%); background-image: linear-gradient(45deg, #f76d1a 0%, #f98d0b 100%); background-repeat: repeat-x; filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#f76d1a00', endColorstr='#f98d0b00', GradientType=1); background-color: #f76d1a; border-bottom-color: #f76d1a; color: #fff; }
+
+.btn-orange:hover { background-image: -webkit-linear-gradient(45deg, #f76d1a 0%, #f98d0b 100%); background-image: -o-linear-gradient(45deg, #f76d1a 0%, #f98d0b 100%); background-image: linear-gradient(45deg, #f76d1a 0%, #f98d0b 100%); background-repeat: repeat-x; filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#f76d1a00', endColorstr='#f98d0b00', GradientType=1); background-color: #f76d1a; border-bottom-color: #f76d1a; color: #f7ecb5; }
+
+.color-white {
+    color: #fff;
+}
+.color-black {
+    color: #2a2a2a;
+}
+.color-orange {
+    color: #f76d1a;
+}
+
+#login {
+    width: 100%;
+    height:100%;
+}
+#login > div {
+    max-width: 920px;
+    position: absolute;
+    left: 50%;
+    margin-left: -460px;
+    top: 50%;
+    margin-top: -280px;
+}
+#login .media-object {
+    width: 80px;
+}
+#login .row h1 {
+    line-height: 48px;
+    margin-bottom: 30px;
+}
+#login .row h1 img {
+    margin: -10px 20px 10px;
+}
+#login .col-md-6:first-child {
+    border-left: solid 2px #dedede;
+}
+#login .form-group label {
+    font-weight: normal;
+}
+#login .form-control {
+    /*background: rgba(255,255,255,.12);*/
+    /*color: #fff;*/
+    text-align: center;
+    /*border-color: rgba(255,255,255,.2);*/
+}
+#login .btn-orange {
+    padding-left: 50px;
+    padding-right: 50px;
+}
+#login a.color-black {
+    display: inline-block;
+    text-decoration: underline;
+}
+#login .col-md-6 a.color-black {
+    margin-top: 20px;
+}
+#login a.color-black:hover {
+    color: #2a2a2a;
+    text-decoration: none;
+}
+#login .callcenter h3 {
+    margin-bottom: 0;
+}
+#login .callcenter h2 {
+    margin-top: 0;
+}
